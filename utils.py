@@ -1,124 +1,77 @@
-'''Some helper functions for PyTorch, including:
-    - get_mean_and_std: calculate the mean and std value of dataset.
-    - msr_init: net parameter initialization.
-    - progress_bar: progress bar mimic xlua.progress.
-'''
+"""Module to define utility functions for the project."""
+import torch
 import os
-import sys
-import time
-import math
-
-import torch.nn as nn
-import torch.nn.init as init
 
 
-def get_mean_and_std(dataset):
-    '''Compute the mean and std value of dataset.'''
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=2)
-    mean = torch.zeros(3)
-    std = torch.zeros(3)
-    print('==> Computing mean and std..')
-    for inputs, targets in dataloader:
-        for i in range(3):
-            mean[i] += inputs[:,i,:,:].mean()
-            std[i] += inputs[:,i,:,:].std()
-    mean.div_(len(dataset))
-    std.div_(len(dataset))
-    return mean, std
+def get_device():
+    """
+    Function to get the device to be used for training and testing.
+    """
 
-def init_params(net):
-    '''Init layer parameters.'''
-    for m in net.modules():
-        if isinstance(m, nn.Conv2d):
-            init.kaiming_normal(m.weight, mode='fan_out')
-            if m.bias:
-                init.constant(m.bias, 0)
-        elif isinstance(m, nn.BatchNorm2d):
-            init.constant(m.weight, 1)
-            init.constant(m.bias, 0)
-        elif isinstance(m, nn.Linear):
-            init.normal(m.weight, std=1e-3)
-            if m.bias:
-                init.constant(m.bias, 0)
+    # Check if cuda is available
+    cuda = torch.cuda.is_available()
 
-
-_, term_width = os.popen('stty size', 'r').read().split()
-term_width = int(term_width)
-
-TOTAL_BAR_LENGTH = 65.
-last_time = time.time()
-begin_time = last_time
-def progress_bar(current, total, msg=None):
-    global last_time, begin_time
-    if current == 0:
-        begin_time = time.time()  # Reset for new bar.
-
-    cur_len = int(TOTAL_BAR_LENGTH*current/total)
-    rest_len = int(TOTAL_BAR_LENGTH - cur_len) - 1
-
-    sys.stdout.write(' [')
-    for i in range(cur_len):
-        sys.stdout.write('=')
-    sys.stdout.write('>')
-    for i in range(rest_len):
-        sys.stdout.write('.')
-    sys.stdout.write(']')
-
-    cur_time = time.time()
-    step_time = cur_time - last_time
-    last_time = cur_time
-    tot_time = cur_time - begin_time
-
-    L = []
-    L.append('  Step: %s' % format_time(step_time))
-    L.append(' | Tot: %s' % format_time(tot_time))
-    if msg:
-        L.append(' | ' + msg)
-
-    msg = ''.join(L)
-    sys.stdout.write(msg)
-    for i in range(term_width-int(TOTAL_BAR_LENGTH)-len(msg)-3):
-        sys.stdout.write(' ')
-
-    # Go back to the center of the bar.
-    for i in range(term_width-int(TOTAL_BAR_LENGTH/2)+2):
-        sys.stdout.write('\b')
-    sys.stdout.write(' %d/%d ' % (current+1, total))
-
-    if current < total-1:
-        sys.stdout.write('\r')
+    # Based on check enable cuda if present, if not available
+    if cuda:
+        final_choice = "cuda"
     else:
-        sys.stdout.write('\n')
-    sys.stdout.flush()
+        final_choice = "cpu"
 
-def format_time(seconds):
-    days = int(seconds / 3600/24)
-    seconds = seconds - days*3600*24
-    hours = int(seconds / 3600)
-    seconds = seconds - hours*3600
-    minutes = int(seconds / 60)
-    seconds = seconds - minutes*60
-    secondsf = int(seconds)
-    seconds = seconds - secondsf
-    millis = int(seconds*1000)
+    # pylint: disable=E1101
+    return final_choice, torch.device(final_choice)
 
-    f = ''
-    i = 1
-    if days > 0:
-        f += str(days) + 'D'
-        i += 1
-    if hours > 0 and i <= 2:
-        f += str(hours) + 'h'
-        i += 1
-    if minutes > 0 and i <= 2:
-        f += str(minutes) + 'm'
-        i += 1
-    if secondsf > 0 and i <= 2:
-        f += str(secondsf) + 's'
-        i += 1
-    if millis > 0 and i <= 2:
-        f += str(millis) + 'ms'
-        i += 1
-    if f == '':
-        f = '0ms'
-    return f
+
+
+def get_num_workers(model_run_location):
+    """Given a run mode, return the number of workers to be used for data loading."""
+
+    # calculate the number of workers
+    num_workers = (os.cpu_count() - 1) if os.cpu_count() > 3 else 2
+
+    # If run_mode is local, use only 2 workers
+    num_workers = num_workers if model_run_location == "colab" else 0
+
+    return num_workers
+
+
+def get_correct_prediction_count(prediction, label):
+    """
+    Function to get the count of correct predictions.
+    """
+    return prediction.argmax(dim=1).eq(label).sum().item()
+
+
+# Function to save the model
+def save_model(epoch, model, optimizer, scheduler, batch_size, criterion, file_name):
+    """
+    Function to save the trained model along with other information to disk.
+    """
+    # print(f"Saving model from epoch {epoch}...")
+    torch.save(
+        {
+            "epoch": epoch,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "scheduler_state_dict": scheduler.state_dict(),
+            "batch_size": batch_size,
+            "loss": criterion,
+        },
+        file_name,
+    )
+
+def pretty_print_metrics(num_epochs, results):
+    """
+    Function to print the metrics in a pretty format.
+    """
+    # Extract train_losses, train_acc, test_losses, test_acc from results
+    train_losses = results["train_loss"]
+    train_acc = results["train_acc"]
+    test_losses = results["test_loss"]
+    test_acc = results["test_acc"]
+
+    for i in range(num_epochs):
+        print(
+            f"Epoch: {i+1:02d}, Train Loss: {train_losses[i]:.4f}, "
+            f"Test Loss: {test_losses[i]:.4f}, Train Accuracy: {train_acc[i]:.4f}, "
+            f"Test Accuracy: {test_acc[i]:.4f}"
+        )
