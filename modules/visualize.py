@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 # Overlay gradcam on top of numpy image
+from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
 
