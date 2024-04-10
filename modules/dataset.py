@@ -6,7 +6,7 @@ import albumentations as A
 # import cv2
 import numpy as np
 from albumentations.pytorch.transforms import ToTensorV2
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset,DataLoader
 from torchvision import datasets
 
 # Use precomputed values for mean and standard deviation of the dataset
