@@ -9,6 +9,7 @@ Reference:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchinfo
 
 def detailed_model_summary(model, input_size, device):
     """Define a function to print the model summary."""
