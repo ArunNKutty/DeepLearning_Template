@@ -120,7 +120,7 @@ def plot_gradcam_images(
     """Show gradcam for misclassified images"""
 
     # Flag to enable cuda
-    use_cuda = device == "cuda"
+    device == "cuda"
 
     # Calculate the number of images to plot
     num_images = min(num_images, len(data["ground_truths"]))
@@ -134,7 +134,7 @@ def plot_gradcam_images(
     # Initialize the GradCAM object
     # https://github.com/jacobgil/pytorch-grad-cam/blob/master/pytorch_grad_cam/grad_cam.py
     # https://github.com/jacobgil/pytorch-grad-cam/blob/master/pytorch_grad_cam/base_cam.py
-    cam = GradCAM(model=model, target_layers=target_layers, use_cuda=use_cuda)
+    cam = GradCAM(model=model, target_layers=target_layers, use_cuda=device)
 
     # Iterate through the images and plot them in the grid along with class labels
     for img_index in range(1, num_images + 1):
