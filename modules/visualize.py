@@ -187,7 +187,7 @@ def plot_grad_cam_different_targets(model, loader, classes, device):
 
     # Construct the CAM object once, and then re-use it on many images:
     cam = GradCAM(
-        model=model, target_layers=target_layers, use_cuda=torch.cuda.is_available()
+        model=model, target_layers=target_layers
     )
 
     fig = plt.figure(figsize=(10, 5))
@@ -226,7 +226,7 @@ def plot_grad_cam_misclassified(model, incorrect, classes, device):
 
     # Construct the CAM object once, and then re-use it on many images:
     cam = GradCAM(
-        model=model, target_layers=target_layers, use_cuda=torch.cuda.is_available()
+        model=model, target_layers=target_layers
     )
     fig = plt.figure(figsize=(20, 10))
     for i in range(10):
