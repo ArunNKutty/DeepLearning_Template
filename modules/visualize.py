@@ -186,9 +186,7 @@ def plot_grad_cam_different_targets(model, loader, classes, device):
     imput_tensor = input_tensor[0].unsqueeze(0).to(device)
 
     # Construct the CAM object once, and then re-use it on many images:
-    cam = GradCAM(
-        model=model, target_layers=target_layers
-    )
+    cam = GradCAM(model=model, target_layers=target_layers)
 
     fig = plt.figure(figsize=(10, 5))
     plt.suptitle(f"GradCAM ID | Target Class : {classes[target[0]]}")
@@ -225,9 +223,7 @@ def plot_grad_cam_misclassified(model, incorrect, classes, device):
     target_layers = [model.layer3[-1]]
 
     # Construct the CAM object once, and then re-use it on many images:
-    cam = GradCAM(
-        model=model, target_layers=target_layers
-    )
+    cam = GradCAM(model=model, target_layers=target_layers)
     fig = plt.figure(figsize=(20, 10))
     for i in range(10):
         misclassified_tuple = incorrect[i]
